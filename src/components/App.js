@@ -14,7 +14,7 @@ import Register from './Register';
 import Login from './Login';
 import InfoTooltip from './InfoTooltip';
 import ProtectedRoute from './ProtectedRoute';
-import * as Auth from './Auth';
+import * as Auth from '../utils/Auth';
 
 function App(props) {
 
@@ -37,6 +37,7 @@ function App(props) {
   const [isInfoTooltipOpen, setisInfoTooltipOpen] = React.useState(false);
 
   React.useEffect(()=>{
+    if (loggedIn) {
     Promise.all([api.getUserInfo(), api.getInitialCards()])
       .then(([userData, cards]) => {
         setCurrentUser(userData);
@@ -44,19 +45,58 @@ function App(props) {
       })
       .then(handleTokenCheck())
       .catch(err => console.log(err))
-    }, [])
+    }
+  }, [])
+
+  function signOut() {
+    localStorage.removeItem("token");
+    props.history.push("/signin");
+  }
 
   function handleLogin() {
     setLoggedIn(true);
     handleTokenCheck()
   }
 
+  function handleLoginSubmit({ email, password }, callbackSetValues) {
+    Auth.authorize(email, password)
+      .then((res) => {
+        if (res.token) {
+          callbackSetValues();
+          handleLogin();
+          localStorage.setItem('token', res.token);
+          props.history.push('/')
+        } else {
+         changeInfoTooltipstatus(); 
+         openInfoTooltip();
+        }
+      })
+      .catch(err => console.log(err));
+  };
+
+  function handleRegisterSubmit({ email, password }) {
+    Auth.register(email, password)
+      .then((res) => {
+        if (res) {
+          openInfoTooltip();
+          props.history.push('/signin')
+        } else {
+          openInfoTooltip();
+      }
+    })
+      .catch(err => console.log(err))
+    };
+
+  React.useEffect(() => {
+    handleTokenCheck()
+  }, [handleTokenCheck])
+
   function handleTokenCheck() {
-    if (localStorage.getItem('token')) {
-      const token = localStorage.getItem('token');
-      
+    const token = localStorage.getItem('token');
+
+    if (token) {     
       Auth.checkToken(token)
-        .then((res) => {
+        .then(res => {
           if (res) {
             setLoggedIn(true);
             setUserEmail(res.data.email);
@@ -149,7 +189,7 @@ function App(props) {
     <CurrentUserContext.Provider value={currentUser}>
       <div className="body">
         <div className="page">
-          <Header email={userEmail} loggedIn={loggedIn}/>
+          <Header email={userEmail} loggedIn={loggedIn} onSignOut={signOut}/>
           <Switch>
 
             <ProtectedRoute 
@@ -159,11 +199,11 @@ function App(props) {
             />
 
             <Route path="/signup">
-              <Register changeInfoTooltipstatus={changeInfoTooltipstatus} openInfoTooltip={openInfoTooltip}/>
+              <Register changeInfoTooltipstatus={changeInfoTooltipstatus} openInfoTooltip={openInfoTooltip} onRegisterSubmit={handleRegisterSubmit} />
             </Route>
 
             <Route path="/signin">
-              <Login handleLogin={handleLogin}/>
+              <Login handleLogin={handleLogin} onLoginSubmit={handleLoginSubmit}/>
             </Route>
 
           </Switch>

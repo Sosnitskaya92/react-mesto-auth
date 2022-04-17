@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, withRouter } from "react-router-dom";
-import * as Auth from "./Auth";
+import * as Auth from "../utils/Auth";
 
 function Register(props) {
 
@@ -19,14 +19,18 @@ function Register(props) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    Auth.register(values.email, values.password)
-      .then((res) => {
-        if (res.error) {
-          props.changeInfoTooltipstatus();
-          props.openInfoTooltip();
-        } 
-      })
-  };
+    props.onRegisterSubmit(
+      {
+        email: values.email,
+        password: values.password,
+      },
+      () =>
+        setValues({
+          email: '',
+          password: '',
+        })
+    );
+  }
   
   return (
     <div className="login">

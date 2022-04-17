@@ -1,6 +1,5 @@
 import React from "react";
 import { withRouter } from "react-router-dom";
-import * as Auth from "./Auth";
 
 function Login(props) {
   
@@ -22,21 +21,16 @@ function Login(props) {
     if (!values.email || !values.password) {
       return;
     }
-    Auth.authorize(values.email, values.password)
-      .then((res) => {
-        if (res.token) {
-          setValues({
-            username: '',
-            password: '',
-          })
-
-          localStorage.setItem('token', res.token);
-          props.handleLogin();
-          props.history.push('/')   
-        }
-      })  
-      .catch(err => console.log(err));
-  };
+    props.onLoginSubmit(
+      {
+        email: values.email,
+        password: values.password,
+      },
+      () => {
+        setValues({ email: '', password: '' });
+      }
+    );
+  }
 
   return (
     <div className="login">
