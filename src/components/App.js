@@ -9,7 +9,7 @@ import api from '../utils/Api';
 import EditProfilePopup from './EditProfilePopup';
 import EditAvatarPopup from './EditAvatarPopup';
 import AddPlacePopup from './AddPlacePopup';
-import { Route, Switch, withRouter } from 'react-router-dom';
+import { Route, Switch, withRouter, useHistory } from 'react-router-dom';
 import Register from './Register';
 import Login from './Login';
 import InfoTooltip from './InfoTooltip';
@@ -35,6 +35,8 @@ function App(props) {
   const [InfoTooltipStatus, setInfoTooltipStatus] = React.useState(true);
 
   const [isInfoTooltipOpen, setisInfoTooltipOpen] = React.useState(false);
+
+  const history = useHistory();
 
   React.useEffect(()=>{
     if (loggedIn) {
@@ -65,7 +67,7 @@ function App(props) {
           callbackSetValues();
           handleLogin();
           localStorage.setItem('token', res.token);
-          props.history.push('/')
+          history.push('/')
         } else {
          changeInfoTooltipstatus(); 
          openInfoTooltip();
@@ -77,12 +79,12 @@ function App(props) {
   function handleRegisterSubmit({ email, password }) {
     Auth.register(email, password)
       .then((res) => {
-        if (res) {
+        if (!res.error) {
           openInfoTooltip();
-          props.history.push('/signin')
+          history.push('/signin')
         } else {
           openInfoTooltip();
-      }
+        }
     })
       .catch(err => console.log(err))
     };
@@ -100,7 +102,7 @@ function App(props) {
           if (res) {
             setLoggedIn(true);
             setUserEmail(res.data.email);
-            props.history.push('/');
+            history.push('/');
             }
         })
         .catch(err => console.log(err))
